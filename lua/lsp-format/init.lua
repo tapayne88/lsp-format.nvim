@@ -52,7 +52,7 @@ M._parse_value = function(key, value)
     return value
 end
 
-local function format(clients, options)
+function M.trigger_format(clients, options)
     local bufnr = vim.api.nvim_get_current_buf()
     local format_options = vim.deepcopy(M.format_options[vim.bo.filetype] or {})
     for key, option in pairs(format_options) do
@@ -95,7 +95,7 @@ M.format = function(options)
     end
 
     local clients = vim.tbl_values(vim.lsp.buf_get_clients())
-    format(clients, options or {})
+    M.trigger_format(clients, options or {})
 end
 
 M.format_in_range = function(options)
@@ -110,7 +110,7 @@ M.format_in_range = function(options)
         return client.supports_method "textDocument/rangeFormatting"
     end, vim.lsp.buf_get_clients())
 
-    format(clients, options)
+    M.trigger_format(clients, options)
 end
 
 M.disable = function(options)
