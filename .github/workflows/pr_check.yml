@@ -2,15 +2,21 @@ name: Pull request check
 
 on:
   pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
 
 jobs:
   format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: JohnnyMorganz/stylua-action@1.0.0
+      - uses: JohnnyMorganz/stylua-action@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          version: 0.16.0
           args: --check .
 
   block-fixup:
@@ -29,7 +35,7 @@ jobs:
 
       - uses: leafo/gh-actions-lua@v8.0.0
         with:
-          luaVersion: 'luajit-2.1.0-beta3'
+          luaVersion: "luajit-2.1.0-beta3"
 
       - uses: leafo/gh-actions-luarocks@v4.0.0
 
