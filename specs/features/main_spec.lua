@@ -17,6 +17,9 @@ vim.lsp.buf_get_clients = function()
     clients[mock_client.name] = mock_client
     return clients
 end
+vim.lsp.get_client_by_id = function()
+    return mock_client
+end
 
 describe("lsp-format", function()
     local c
