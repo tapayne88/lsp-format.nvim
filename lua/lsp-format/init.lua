@@ -94,7 +94,7 @@ M.format = function(options)
         return
     end
 
-    local clients= vim.tbl_values(vim.lsp.buf_get_clients())
+    local clients = vim.tbl_values(vim.lsp.buf_get_clients())
     format(clients, options or {})
 end
 
@@ -106,8 +106,8 @@ M.format_in_range = function(options)
     options = options or {}
     options.in_range = true
 
-    local clients= vim.tbl_filter(function(client)
-      return client.supports_method "textDocument/rangeFormatting"
+    local clients = vim.tbl_filter(function(client)
+        return client.supports_method "textDocument/rangeFormatting"
     end, vim.lsp.buf_get_clients())
 
     format(clients, options)
@@ -220,12 +220,12 @@ M._format = function(bufnr, client, format_options, options)
     local method, params
 
     if options.in_range then
-      method = "textDocument/rangeFormatting"
-      params = lspUtil.make_given_range_params(nil, nil, bufnr, client.offset_encoding or "utf-16")
-      params.options = lspUtil.make_formatting_params(format_options).options
+        method = "textDocument/rangeFormatting"
+        params = lspUtil.make_given_range_params(nil, nil, bufnr, client.offset_encoding or "utf-16")
+        params.options = lspUtil.make_formatting_params(format_options).options
     else
-      method = "textDocument/formatting"
-      params = lspUtil.make_formatting_params(format_options)
+        method = "textDocument/formatting"
+        params = lspUtil.make_formatting_params(format_options)
     end
 
     local timeout_ms = 2000
