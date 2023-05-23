@@ -13,7 +13,11 @@ M.setup = function(format_options)
     M.format_options = vim.tbl_deep_extend("force", M.format_options, format_options or {})
 
     vim.api.nvim_create_user_command("Format", M.format, { nargs = "*", bar = true, force = true })
-    vim.api.nvim_create_user_command("FormatInRange", M.format_in_range, { nargs = "*", bar = true, force = true })
+    vim.api.nvim_create_user_command(
+        "FormatInRange",
+        M.format_in_range,
+        { range = true, nargs = "*", bar = true, force = true }
+    )
     vim.api.nvim_create_user_command(
         "FormatToggle",
         M.toggle,
