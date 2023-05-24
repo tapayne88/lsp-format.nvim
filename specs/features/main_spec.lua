@@ -32,6 +32,7 @@ describe("lsp-format", function()
             return true
         end
         f.setup {}
+        f.format_options = {}
         f.on_attach(c)
     end)
 
@@ -292,78 +293,126 @@ describe("lsp-format", function()
     end)
 
     for _, format_command in ipairs { "format", "format_in_range" } do
-        it(string.format("[%s] FormatToggle prevent/allow formatting", format_command), function()
-            f.toggle { args = "" }
-            f.format {}
-            assert.stub(c.request).was_called(0)
+        describe(string.format("[%s]", format_command), function()
+            it("FormatToggle prevent/allow formatting", function()
+                f.toggle { args = "" }
+                f[format_command] {}
+                assert.stub(c.request).was_called(0)
 
-            f.toggle { args = "" }
-            f.format {}
-            assert.stub(c.request).was_called(1)
-        end)
+                f.toggle { args = "" }
+                f[format_command] {}
+                assert.stub(c.request).was_called(1)
+            end)
 
-        it(string.format("[%s] FormatDisable/Enable prevent/allow formatting", format_command), function()
-            f.disable { args = "" }
-            f.format {}
-            assert.stub(c.request).was_called(0)
+            it("FormatDisable/Enable prevent/allow formatting", function()
+                f.disable { args = "" }
+                f[format_command] {}
+                assert.stub(c.request).was_called(0)
 
-            f.enable { args = "" }
-            f.format {}
-            assert.stub(c.request).was_called(1)
-        end)
+                f.enable { args = "" }
+                f[format_command] {}
+                assert.stub(c.request).was_called(1)
+            end)
 
-        it(string.format("[%s] does not overwrite changes", format_command), function()
-            local apply_text_edits = spy.on(vim.lsp.util, "apply_text_edits")
-            c.request = function(_, params, handler, bufnr)
-                api.nvim_buf_get_var = function(_, var)
-                    if var == "format_changedtick" then
-                        return 9999
+            it("does not overwrite changes", function()
+                local apply_text_edits = spy.on(vim.lsp.util, "apply_text_edits")
+                c.request = function(_, params, handler, bufnr)
+                    api.nvim_buf_get_var = function(_, var)
+                        if var == "format_changedtick" then
+                            return 9999
+                        end
+                        return 1
                     end
-                    return 1
+                    handler(nil, {}, { bufnr = bufnr, params = params })
                 end
-                handler(nil, {}, { bufnr = bufnr, params = params })
-            end
-            f[format_command] {}
-            assert.spy(apply_text_edits).was.called(0)
-        end)
+                f[format_command] {}
+                assert.spy(apply_text_edits).was.called(0)
+            end)
 
-        it(string.format("[%s] does overwrite changes with force", format_command), function()
-            local apply_text_edits = spy.on(vim.lsp.util, "apply_text_edits")
-            c.request = function(_, params, handler, bufnr)
-                api.nvim_buf_get_var = function(_, var)
-                    if var == "format_changedtick" then
-                        return 9999
+            it("does overwrite changes with force", function()
+                local apply_text_edits = spy.on(vim.lsp.util, "apply_text_edits")
+                c.request = function(_, params, handler, bufnr)
+                    api.nvim_buf_get_var = function(_, var)
+                        if var == "format_changedtick" then
+                            return 9999
+                        end
+                        return 1
                     end
-                    return 1
+                    handler(nil, {}, { bufnr = bufnr, params = params })
                 end
-                handler(nil, {}, { bufnr = bufnr, params = params })
-            end
-            f[format_command] { fargs = { "force=true" } }
-            assert.spy(apply_text_edits).was.called(1)
-        end)
+                f[format_command] { fargs = { "force=true" } }
+                assert.spy(apply_text_edits).was.called(1)
+            end)
 
-        it(string.format("[%s] does not overwrite when in insert mode", format_command), function()
-            local apply_text_edits = spy.on(vim.lsp.util, "apply_text_edits")
-            c.request = function(_, params, handler, bufnr)
-                api.nvim_get_mode = function()
-                    return "insert"
+            it("does not overwrite when in insert mode", function()
+                local apply_text_edits = spy.on(vim.lsp.util, "apply_text_edits")
+                c.request = function(_, params, handler, bufnr)
+                    api.nvim_get_mode = function()
+                        return "insert"
+                    end
+                    handler(nil, {}, { bufnr = bufnr, params = params })
                 end
-                handler(nil, {}, { bufnr = bufnr, params = params })
-            end
-            f[format_command] {}
-            assert.spy(apply_text_edits).was.called(0)
-        end)
+                f[format_command] {}
+                assert.spy(apply_text_edits).was.called(0)
+            end)
 
-        it(string.format("[%s] does overwrite when in insert mode with force", format_command), function()
-            local apply_text_edits = spy.on(vim.lsp.util, "apply_text_edits")
-            c.request = function(_, params, handler, bufnr)
-                api.nvim_get_mode = function()
-                    return "insert"
+            it("does overwrite when in insert mode with force", function()
+                local apply_text_edits = spy.on(vim.lsp.util, "apply_text_edits")
+                c.request = function(_, params, handler, bufnr)
+                    api.nvim_get_mode = function()
+                        return "insert"
+                    end
+                    handler(nil, {}, { bufnr = bufnr, params = params })
                 end
-                handler(nil, {}, { bufnr = bufnr, params = params })
-            end
-            f[format_command] { fargs = { "force=true" } }
-            assert.spy(apply_text_edits).was.called(1)
+                f[format_command] { fargs = { "force=true" } }
+                assert.spy(apply_text_edits).was.called(1)
+            end)
+
+            describe("excluding clients", function()
+                describe("for filetypes", function()
+                    it("does format when client is _NOT_ specified", function()
+                        f.setup {
+                            lua = {
+                                exclude = { "NOT-lsp-client-test" },
+                            },
+                        }
+                        vim.bo.filetype = "lua"
+                        f[format_command] {}
+                        assert.stub(c.request).was_called(1)
+                    end)
+
+                    it("doesn't format when client is specified", function()
+                        f.setup {
+                            lua = {
+                                exclude = { "lsp-client-test" },
+                            },
+                        }
+                        vim.bo.filetype = "lua"
+                        f[format_command] {}
+                        assert.stub(c.request).was_called(0)
+                    end)
+                end)
+
+                describe("globally", function()
+                    it("does format when client is _NOT_ specified", function()
+                        f.setup {
+                            exclude = { "NOT-lsp-client-test" },
+                        }
+                        vim.bo.filetype = "lua"
+                        f[format_command] {}
+                        assert.stub(c.request).was_called(1)
+                    end)
+
+                    it("doesn't format when client is specified", function()
+                        f.setup {
+                            exclude = { "lsp-client-test" },
+                        }
+                        vim.bo.filetype = "lua"
+                        f[format_command] {}
+                        assert.stub(c.request).was_called(0)
+                    end)
+                end)
+            end)
         end)
     end
 end)

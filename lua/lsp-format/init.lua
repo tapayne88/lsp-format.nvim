@@ -7,6 +7,7 @@ local M = {
     disabled_filetypes = {},
     queue = {},
     buffers = {},
+    exclude = {},
 }
 
 M.setup = function(format_options)
@@ -71,7 +72,7 @@ function M.trigger_format(clients, options)
 
     for i = #clients, 1, -1 do
         if
-            vim.tbl_contains(format_options.exclude or {}, clients[i].name)
+            vim.tbl_contains(format_options.exclude or M.format_options.exclude or {}, clients[i].name)
             or not vim.tbl_contains(M.buffers[bufnr] or {}, clients[i].id)
         then
             table.remove(clients, i)
