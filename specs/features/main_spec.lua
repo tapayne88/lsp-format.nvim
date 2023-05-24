@@ -294,21 +294,21 @@ describe("lsp-format", function()
     for _, format_command in ipairs { "format", "format_in_range" } do
         it(string.format("[%s] FormatToggle prevent/allow formatting", format_command), function()
             f.toggle { args = "" }
-            f.format {}
+            f[format_command] {}
             assert.stub(c.request).was_called(0)
 
             f.toggle { args = "" }
-            f.format {}
+            f[format_command] {}
             assert.stub(c.request).was_called(1)
         end)
 
         it(string.format("[%s] FormatDisable/Enable prevent/allow formatting", format_command), function()
             f.disable { args = "" }
-            f.format {}
+            f[format_command] {}
             assert.stub(c.request).was_called(0)
 
             f.enable { args = "" }
-            f.format {}
+            f[format_command] {}
             assert.stub(c.request).was_called(1)
         end)
 
