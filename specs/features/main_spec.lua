@@ -367,6 +367,52 @@ describe("lsp-format", function()
                 f[format_command] { fargs = { "force=true" } }
                 assert.spy(apply_text_edits).was.called(1)
             end)
+
+            describe("excluding clients", function()
+                describe("for filetypes", function()
+                    it("does format when client is _NOT_ specified", function()
+                        f.setup {
+                            lua = {
+                                exclude = { "NOT-lsp-client-test" },
+                            },
+                        }
+                        vim.bo.filetype = "lua"
+                        f[format_command] {}
+                        assert.stub(c.request).was_called(1)
+                    end)
+
+                    it("doesn't format when client is specified", function()
+                        f.setup {
+                            lua = {
+                                exclude = { "lsp-client-test" },
+                            },
+                        }
+                        vim.bo.filetype = "lua"
+                        f[format_command] {}
+                        assert.stub(c.request).was_called(0)
+                    end)
+                end)
+
+                describe("globally", function()
+                    it("does format when client is _NOT_ specified", function()
+                        f.setup {
+                            exclude = { "NOT-lsp-client-test" },
+                        }
+                        vim.bo.filetype = "lua"
+                        f[format_command] {}
+                        assert.stub(c.request).was_called(1)
+                    end)
+
+                    it("doesn't format when client is specified", function()
+                        f.setup {
+                            exclude = { "lsp-client-test" },
+                        }
+                        vim.bo.filetype = "lua"
+                        f[format_command] {}
+                        assert.stub(c.request).was_called(0)
+                    end)
+                end)
+            end)
         end)
     end
 end)
