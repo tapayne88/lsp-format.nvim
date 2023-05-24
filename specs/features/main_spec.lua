@@ -32,6 +32,7 @@ describe("lsp-format", function()
             return true
         end
         f.setup {}
+        f.format_options = {}
         f.on_attach(c)
     end)
 
